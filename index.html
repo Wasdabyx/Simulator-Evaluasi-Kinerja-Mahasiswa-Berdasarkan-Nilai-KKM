@@ -135,7 +135,7 @@
     const ITER_LINES = [
       'void iteratif(array A[], int n) {',
       '  for (int i = 0; i < n; i++) {',
-      '    if (A[i] >= 75) {',
+      '    if (A[i] >= KKM) {',
       '      cout << A[i];',
       '    }',
       '  }',
@@ -147,7 +147,7 @@
       '  if (i >= n) {',
       '    return;',
       '  } else {',
-      '    if (A[i] >= 75) {',
+      '    if (A[i] >= KKM) {',
       '      cout << A[i];',
       '    }',
       '    rekursif(A, n, i + 1);',
@@ -313,4 +313,5 @@
     init();
   </script>
 </body>
+
 </html>
