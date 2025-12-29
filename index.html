@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Analisis Kompleksitas Algoritma Iteratif dan Rekursif</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; line-height: 1.4; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 30px; }
+    h1 { color: #2c3e50; font-size: 1.8em; margin-bottom: 10px; font-weight: bold; }
+    .subtitle { color: #666; font-size: 1.1em; background: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; text-align: center; }
+    
+    .controls { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .control-row { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
+    .label { font-weight: bold; color: #333; min-width: 100px; }
+    input, textarea { padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+    textarea { width: 100%; height: 100px; font-family: monospace; margin-top: 5px; }
+    
+    .btn { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+    .btn-secondary { background: #007bff; }
+    .btn-danger { background: #dc3545; }
+    .btn-warning { background: #f39c12; }
+    .btn-success { background: #28a745; }
+    .btn-info { background: #17a2b8; padding: 5px 10px; font-size: 12px; border: 2px solid transparent; }
+    .btn:disabled { background: #ccc; color: #666; cursor: not-allowed; }
+    
+    .btn-info.active { background: #6c757d; outline: 2px solid #343a40; outline-offset: -2px; }
+
+    .shared-array { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .array-scroll-wrapper { width: 100%; overflow-x: auto; white-space: nowrap; padding: 10px 0; border: 1px solid #eee; border-radius: 5px; }
+    .array-grid { display: inline-flex; gap: 4px; padding: 0 10px; }
+    .array-item { min-width: 35px; height: 35px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; flex-shrink: 0; }
+    
+    .array-item.unread { background: #495057; color: #adb5bd; }
+    .array-item.processed-pass { background: #28a745; color: white; }
+    .array-item.processed-fail { background: #6c757d; color: white; }
+    .array-item.current { background: #ffc107; color: #000; transform: scale(1.1); border: 2px solid #e0a800; }
+
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .code-container { background: #2c3e50; border-radius: 8px; padding: 15px; height: 400px; font-size: 14px; margin-bottom: 10px; overflow: hidden; }
+    .code-line { color: #ecf0f1; font-family: monospace; white-space: pre; padding: 4px 5px; border-radius: 3px; }
+    .code-line.highlight { background: #f39c12; color: #000; font-weight: bold; }
+    
+    .output { background: #f8f9fa; border: 1px dashed #ccc; padding: 10px; min-height: 50px; font-family: monospace; border-radius: 5px; }
+
+    .analysis-box { display: none; margin-top: 30px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-top: 5px solid #2980b9; }
+    .comparison-table { width: 100%; border-collapse: collapse; }
+    .comparison-table th, .comparison-table td { padding: 12px; border: 1px solid #eee; text-align: center; }
+    .comparison-table tr:nth-child(even) { background-color: #f9f9f9; }
+    
+    .cop-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
+    .gen-group { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Analisis Kompleksitas Algoritma Iteratif dan Rekursif</h1>
+      <div class="subtitle">Evaluasi Kinerja Mahasiswa Berdasarkan Nilai KKM</div>
+    </div>
+    
+    <div class="controls">
+      <div class="cop-box">
+        <span class="label">Device Cop (ms):</span>
+        <input id="copValue" type="number" step="0.000001" value="0.000000" readonly>
+        <button class="btn btn-warning" id="benchBtn">Cek Cop Device</button>
+        <small id="benchStatus">Wajib kalibrasi sebelum pengujian</small>
+      </div>
+      
+      <div id="mainControls" style="opacity: 0.5; pointer-events: none;">
+        <div class="control-row">
+          <div class="label">KKM:</div>
+          <input id="kkm" type="number" value="75">
+        </div>
+        <div class="control-row" style="flex-direction: column; align-items: flex-start;">
+          <div class="label">Generate Data (n):</div>
+          <div class="gen-group">
+            <button class="btn btn-info btn-n" onclick="generateData(1, this)">1</button>
+            <button class="btn btn-info btn-n" onclick="generateData(10, this)">10</button>
+            <button class="btn btn-info btn-n" onclick="generateData(100, this)">100</button>
+            <button class="btn btn-info btn-n" onclick="generateData(500, this)">500</button>
+            <button class="btn btn-info btn-n" onclick="generateData(1000, this)">1000</button>
+            <button class="btn btn-info btn-n" onclick="generateData(2500, this)">2500</button>
+            <button class="btn btn-info btn-n" onclick="generateData(5000, this)">5000</button>
+            <button class="btn btn-info btn-n" onclick="generateData(7500, this)">7500</button>
+            <button class="btn btn-info btn-n" onclick="generateData(10000, this)">10000</button>
+          </div>
+          <div class="label" style="margin-top: 15px;">Input Nilai:</div>
+          <textarea id="values" placeholder="Pilih N..."></textarea>
+          <div class="btn-group" style="margin-top: 10px;">
+            <button class="btn btn-secondary" id="runBtn">Run</button>
+            <button class="btn btn-success" id="skipBtn" disabled>Skip</button>
+            <button class="btn btn-danger" id="stopBtn" disabled>Stop</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shared-array">
+      <div class="array-scroll-wrapper"><div class="array-grid" id="sharedArray"></div></div>
+      <p id="arrayInfo" style="margin-top:10px; font-weight:bold;"></p>
+    </div>
+
+    <div class="main-grid">
+      <div class="panel">
+        <h3>Iteratif</h3>
+        <div class="code-container" id="iterCode"></div>
+        <div class="output" id="iterOutput"></div>
+      </div>
+      <div class="panel">
+        <h3>Rekursif</h3>
+        <div class="code-container" id="rekCode"></div>
+        <div class="output" id="rekOutput"></div>
+      </div>
+    </div>
+
+    <div class="analysis-box" id="analysisBox">
+      <h2>Hasil Perbandingan Algoritma</h2>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Metrik</th><th>Iteratif</th><th>Rekursif</th><th>Selisih (Absolut)</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let A = [], isStopped = false, isSkipped = false, rekOpsTotal = 0, staticStart = 0;
+    let dataIter = {}, dataRek = {};
+
+    const ITER_LINES = [
+      'void iteratif(array A[], int n) {',
+      '  for (int i = 0; i < n; i++) {',
+      '    if (A[i] >= 75) {',
+      '      cout << A[i];',
+      '    }',
+      '  }',
+      '}'
+    ];
+
+    const REK_LINES = [
+      'void rekursif(array A[], int n, int i) {',
+      '  if (i >= n) {',
+      '    return;',
+      '  } else {',
+      '    if (A[i] >= 75) {',
+      '      cout << A[i];',
+      '    }',
+      '    rekursif(A, n, i + 1);',
+      '  }',
+      '}'
+    ];
+
+    function init() {
+      document.getElementById('iterCode').innerHTML = ITER_LINES.map(l => `<div class="code-line">${l}</div>`).join('');
+      document.getElementById('rekCode').innerHTML = REK_LINES.map(l => `<div class="code-line">${l}</div>`).join('');
+    }
+
+    function generateData(n, btn) {
+      document.querySelectorAll('.btn-n').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('values').value = Array.from({length: n}, () => Math.floor(Math.random() * 101)).join(', ');
+    }
+
+    document.getElementById('benchBtn').onclick = () => {
+      const s = performance.now();
+      for(let i=0; i<10000000; i++){ if(i>=0){} }
+      document.getElementById('copValue').value = ((performance.now() - s) / 10000000).toFixed(8);
+      document.getElementById('benchStatus').textContent = "Kalibrasi Selesai.";
+      document.getElementById('mainControls').style.opacity = "1";
+      document.getElementById('mainControls').style.pointerEvents = "auto";
+    };
+
+    async function animateIteratif(kkm, cop) {
+      const start = performance.now();
+      let ops = 0;
+      const lines = document.querySelectorAll('#iterCode .code-line');
+      document.getElementById('iterOutput').textContent = '';
+
+      for (let i = 0; i < A.length && !isStopped; i++) {
+        if (!isSkipped) {
+            updateArrayUI(i, kkm);
+            highlight(lines, 1); await sleep(30);
+            highlight(lines, 2); await sleep(50);
+            if (A[i] >= kkm) {
+                highlight(lines, 3);
+                document.getElementById('iterOutput').textContent += A[i] + ' ';
+                await sleep(30);
+            }
+        }
+        ops++;
+      }
+      
+      if (!isSkipped) { highlight(lines, 6); await sleep(100); }
+      
+      dataIter = { 
+          riil: isSkipped ? null : (performance.now()-start).toFixed(2), 
+          ops: ops, 
+          opTime: (ops*cop).toFixed(8), 
+          loc: ITER_LINES.length 
+      };
+    }
+
+    async function animateRekursif(kkm, cop, i = 0) {
+      const lines = document.querySelectorAll('#rekCode .code-line');
+      if (i === 0) { rekOpsTotal = 0; staticStart = performance.now(); document.getElementById('rekOutput').textContent = ''; }
+      
+      if (isSkipped) {
+        dataRek = {
+		  riil: null,
+		  ops: A.length,      
+		  opTime: (A.length * cop).toFixed(8),
+		  loc: REK_LINES.length,
+		  estimated: true
+		};
+		return;
+      }
+
+      highlight(lines, 1); await sleep(50);
+
+      if (isStopped || i >= A.length) {
+        highlight(lines, 2); await sleep(30);
+        highlight(lines, 9); await sleep(100);
+        dataRek = { 
+            riil: (performance.now()-staticStart).toFixed(2), 
+            ops: rekOpsTotal, 
+            opTime: (rekOpsTotal*cop).toFixed(8), 
+            loc: REK_LINES.length 
+        };
+        return;
+      }
+
+      updateArrayUI(i, kkm);
+      highlight(lines, 3); await sleep(30);
+      highlight(lines, 4); await sleep(50);
+      rekOpsTotal++;
+
+      if (A[i] >= kkm) {
+        highlight(lines, 5);
+        await sleep(30);
+      }
+
+      highlight(lines, 7); await sleep(50);
+      await animateRekursif(kkm, cop, i + 1);
+      if (i === 0) { highlight(lines, 9); await sleep(100); }
+    }
+
+    function showAnalysis() {
+      const body = document.getElementById('tableBody');
+      const diffOps = Math.abs(dataIter.ops - dataRek.ops);
+      const diffOpTime = Math.abs(parseFloat(dataIter.opTime) - parseFloat(dataRek.opTime)).toFixed(8);
+      
+      let riilIter = dataIter.riil ? `${dataIter.riil} ms` : "<i>(Harus run full)</i>";
+      let riilRek = dataRek.riil ? `${dataRek.riil} ms` : "<i>(Harus run full)</i>";
+      let riilDiff = (dataIter.riil && dataRek.riil) ? (Math.abs(dataIter.riil - dataRek.riil).toFixed(2) + " ms") : "-";
+
+      body.innerHTML = `
+        <tr><td><b>Baris Kode (LOC)</b></td><td>${dataIter.loc}</td><td>${dataRek.loc}</td><td>${Math.abs(dataIter.loc - dataRek.loc)}</td></tr>
+        <tr><td><b>Operasi Dasar (C(n))</b></td><td>${dataIter.ops}</td><td>${dataRek.ops}</td><td>${diffOps}</td></tr>
+        <tr><td><b>Running Time Riil</b></td><td>${riilIter}</td><td>${riilRek}</td><td>${riilDiff}</td></tr>
+        <tr><td><b>Running Time Op</b></td><td>${dataIter.opTime} ms</td><td>${dataRek.opTime} ms</td><td>${diffOpTime} ms</td></tr>
+      `;
+      document.getElementById('analysisBox').style.display = 'block';
+    }
+
+    function updateArrayUI(currIdx, kkm) {
+      const container = document.getElementById('sharedArray');
+      container.innerHTML = '';
+      A.forEach((v, idx) => {
+        const div = document.createElement('div');
+        div.className = 'array-item ' + (idx < currIdx ? (v >= kkm ? 'processed-pass' : 'processed-fail') : (idx === currIdx ? 'current' : 'unread'));
+        div.textContent = v;
+        container.appendChild(div);
+      });
+      if(currIdx >= 0 && container.children[currIdx]) {
+          container.children[currIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    function highlight(lines, idx) { lines.forEach(l => l.classList.remove('highlight')); if(lines[idx]) lines[idx].classList.add('highlight'); }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    document.getElementById('runBtn').onclick = async () => {
+      A = document.getElementById('values').value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+      if (A.length === 0) return alert("Pilih N!");
+      const kkm = parseInt(document.getElementById('kkm').value) || 75;
+      const cop = parseFloat(document.getElementById('copValue').value) || 0;
+      
+      document.getElementById('arrayInfo').textContent = `n = ${A.length}`;
+      document.getElementById('analysisBox').style.display = 'none';
+      isStopped = false;
+      isSkipped = false;
+      
+      document.getElementById('runBtn').disabled = true;
+      document.getElementById('skipBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = false;
+      
+      await animateIteratif(kkm, cop);
+      if(!isStopped) await animateRekursif(kkm, cop);
+      if(!isStopped) showAnalysis();
+      
+      document.getElementById('runBtn').disabled = false;
+      document.getElementById('skipBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = true;
+    };
+
+    document.getElementById('skipBtn').onclick = () => { isSkipped = true; };
+    document.getElementById('stopBtn').onclick = () => { isStopped = true; };
+    init();
+  </script>
+</body>
+</html>
